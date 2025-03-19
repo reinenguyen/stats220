@@ -15,6 +15,7 @@
 2. [Balatro](https://www.playbalatro.com/)
 3. [Lobotomy Corporation](https://store.steampowered.com/app/568220/Lobotomy_Corporation__Monster_Management_Simulation/)
 4. [Slay the Spire](https://store.steampowered.com/app/646570/Slay_the_Spire/)
+5. [Hades](https://store.steampowered.com/app/1145360/Hades/)
 
 ## Meme gallery:
 
