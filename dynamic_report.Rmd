@@ -48,17 +48,44 @@ pre {
   margin: 20px;
   padding: 10px 20px;
 }
+
+h1 {
+  text-align: center;
+}
 ```
+# A study into Tiggers' play preference
+
+## What's the goal of this report?
+An attempt to understand my cat Tiggers, who I have had for 11 years, essentially. Throughout the years we had bought her numerous amount of toys but if you ask me if she has any favorites, I wouldn't be so sure myself. She plays with all the toys we bought her, and sometimes she likes to play with the ping pong balls only for several days, sometimes she only goes through the tunnel.
+
+
+The form serves as a record for me to note down which toy she plays with and in which location, in order to analyze if there's any certain type of toys she likes to play with or if it depends on which room the toy is in from the data. Mostly for my curiosity, and if I can find any pattern maybe I can be more mindful when choosing her toys in the future.
+
 
 ## Analyzing Tigger's preference for toys by location
 
 We first try to analyze if Tiggers prefer any one room in the house to hang out and release some of her energy.
+
+For each room here's the toy distribution: 
+
+- Hallway: Ping pong ball, Scratch post
+
+- Living room: Ping pong ball, Cat tunnel, Roller circuit toy
+
+- Kitchen: Ping pong ball, Cat dancer, Bell mouse
+
+- Bedroom: Banana catnip toy, Crinkle mice, Springs, Paper frog
+
+- Yard: Ping pong ball, Bizzy balls, Sprite bottle cap, An old shoelace, A chain of zipties
+
+Let's look at the plot of the amount of minutes Tiggers play in each room:
+
 ```{r}
 # Read csv form data
 csv_file <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vQLTXg5MuldGJkcDpyDl_t46_0IDrsl6APnKaIyPFk51z5DJE50fRnS8Vj8k8ybGabg86fFPUk2fWes/pub?output=csv"
-
 logged_data <- read_csv(csv_file)
 
+# Rename columns to be shorter and appropriate variable name
 latest_data <- logged_data %>%
   rename(location = 2,
          hallway_toy = 3,
@@ -72,33 +99,7 @@ latest_data <- logged_data %>%
          yard_toy = 11,
          yard_time = 12)
 
-latest_data %>%
-  ggplot() +
-  geom_bar(aes(x = location)) +
-  theme_bw() +
-  labs(title = "A study into Tiggers' play preference",
-       subtitle = "Per location",
-       x = "Location",
-       y = "Count")
-
-```
-
-It looks like she likes to play with the toys in the kitchen and living room most often, while the hallway and yard are less frequented by her.
-
-But as we are focusing more on her preference for the toys in this report, instead of how many times she plays in each room we should instead analyze how much she enjoys playing with the toys there i.e. how many minutes she plays in total in each room.
-
-Let's see if the total amount of minutes she plays in the kitchen and living room really is the highest.
-
-```{r}
-latest_data
-```
-
-Due to the questions being divided into multiple sections based on the location of Tiggers, there are many missing values when it comes to the minutes played in other rooms for that entry. Let's try to combine the type and time for each play session into one column each so the data looks more clean.
-
-
-```{r}
-# Manipulate tibble into one unified table (one column for location, one column
-# for toy)
+# Manipulate tibble into one unified table (one column for location, one column for toy)
 unified_data <- latest_data %>% 
   mutate(time = case_when(
     hallway_time > 0 & !is.na(hallway_time) ~ hallway_time,
@@ -115,70 +116,7 @@ unified_data <- latest_data %>%
     .default = yard_toy)) %>%
   select(location, time, toy)
 
-unified_data
-```
-
-
-Now we can try to calculate the total amount of minutes she play in each room
-
-```{r}
-# Calculate the total time Tiggers spent in each location
-sorted_room <- arrange(unified_data, location)
-sorted_room
-
-total_bedroom <- sorted_room %>%
-  slice(c(1 : 3)) %>%
-  select(time) %>%
-  sum()
-
-total_hallway <- sorted_room %>%
-  slice(c(4 : 5)) %>%
-  select(time) %>%
-  sum()
-
-total_kitchen <- sorted_room %>%
-  slice(c(6 : 10)) %>%
-  select(time) %>%
-  sum()
-
-total_livingr <- sorted_room %>%
-  slice(c(11 : 15)) %>%
-  select(time) %>%
-  sum()
-
-total_yard <- sorted_room %>%
-  slice(c(16 : 17)) %>%
-  select(time) %>%
-  sum()
-
-total_location <- c(total_bedroom, total_kitchen, total_livingr, total_yard, total_hallway)
-
-# Find the location with most and least amount of minutes Tiggers spent in
-min_location <- min(total_location) 
-max_location <- max(total_location)
-
-```
-
-We found out that for each location, her respective play times are:
-
-- bedroom: `r total_bedroom`
-
-- hallway: `r total_hallway`
-
-- living room: `r total_livingr`
-
-- yard: `r total_yard`
-
-- kitchen: `r total_kitchen`
-
-and that the most/least amount of minutes she plays in a room is `r max_location` and `r min_location` minutes respectively.
-
-So while it's true that she likes to play in the living room the most, it seems like the kitchen isn't as popular as we were first let to believe, in fact losing to the bedroom. 
-
-Let's try plotting by the minute for more accuracy
-
-```{r}
-# Plot the number of minutes Tiggers play per location
+# Plot the number of minutes Tiggers play per location (first bar chart)
 unified_data %>%
   ggplot() +
   geom_bar(aes(x = location, y = time, fill = toy), 
@@ -190,17 +128,67 @@ unified_data %>%
        x = "Location",
        y = "Number of minutes play",
        fill = "Type of toy")
+
+# Calculate the total time Tiggers spent in each location
+total_bedroom <- unified_data %>%
+  filter(location == 'Bedroom') %>%
+  select(time) %>%
+  sum()
+
+total_hallway <- unified_data %>%
+  filter(location == 'Hallway') %>%
+  select(time) %>%
+  sum()
+
+total_livingr <- unified_data %>%
+  filter(location == 'Living room') %>%
+  select(time) %>%
+  sum()
+
+total_yard <- unified_data %>%
+  filter(location == 'Yard') %>%
+  select(time) %>%
+  sum()
+
+total_kitchen <- unified_data %>%
+  filter(location == 'Kitchen') %>%
+  select(time) %>%
+  sum()
+
+total_location <- c(total_bedroom, total_kitchen, total_livingr, total_yard, total_hallway)
+rooms <- c("Bedroom", "Kitchen", "Living room", "Yard", "Hallway")
+
+# Find the highest and lowest amount of minutes Tiggers spent in a room and assign to a variable to use in report
+min_location <- min(total_location) 
+max_location <- max(total_location)
+
 ```
 
-It would seem like the living room is by and far the most appealing to Tiggers to hang out and play, followed by the bedroom and the kitchen. It looks like there's no clear pattern here: while the living room and kitchen is where our family often hangs around the most, my bedroom is exclusive to me, so human presence is not an indicator. One thing is for sure though: she really prefers the indoors!
+In particular for each location, her respective play times are:
 
-While not having as many toy options compared to most other rooms, we can see that the living room is still far ahead in play time. But does it have to do with the type of toys available in the room?
+- Bedroom: `r total_bedroom`
+
+- Hallway: `r total_hallway`
+
+- Living room: `r total_livingr`
+
+- Yard: `r total_yard`
+
+- Kitchen: `r total_kitchen`
+
+and the most/least amount of minutes she plays in a room is `r max_location` and `r min_location` minutes respectively. Quite a margin between the highest and lowest amount of minutes.
+
+It looks like she likes to play with the toys in the living room most often, followed by the kitchen and my bedroom. In contrast, those in the hallway got the least of her attention. 
+
+There doesn't seem to be a clear pattern to which rooms she likes to play in the most here: while the living room and kitchen is where our family often hangs around, my bedroom is exclusive to me, so human presence is not an indicator. The yard has the most amount of toys but ended up as the least popular location, while the living room is still far ahead in play time despite not having as many toy options compared to most other rooms, so we can see that so the quantity of toy is not a factor either. One thing is for sure though: she really prefers the indoors!
+
+Maybe looking at the type of toys she likes playing with will help us come to a conclusion?
 
 
-## Analyzing Tigger's preference for toys by type
+## Analyzing Tigger's preference for toys
 We plot the play time with the toys in mind: 
 
-```{r,fig.height=4.2,fig.width=12}
+```{r,fig.height=4.2,fig.width=13}
 # Plot the number of minutes Tiggers play per toy
 unified_data %>%
   ggplot() +
@@ -215,35 +203,45 @@ unified_data %>%
        fill = "Location")
 ```
 
-We can see that the roller circuit toy, cat tunnel and banana catnip toy is the clear winner here, and so our previous data is starting to make more sense. It's starting to lean more towards the fact that she just really likes those toys. Let's examine further: 
+We can see that the roller circuit toy, cat tunnel and banana catnip toy is the clear winner here, and so our previous data is starting to make more sense as two of them are located in the living room while the banana toy is in the bedroom, two of our most popular rooms for Tiggers. It's starting to lean more towards the fact that she just really likes those toys while the location doesn't matter. 
+
+But just for the sake of helping me figure out her toy preference by type instead of individual toy (because buying the same toy is boring). I have decided to split the toys into several types: 
+
+- kicker toys: banana catnip toy
+
+- stationary interactive toys: roller circuit toy, cat dancer)
+
+- mobile toys: an old shoelace, bell mouse, paper frog, ping pong ball, sprite bottle cap
+
+- cat tunnel
+
+- scratch post
 
 ```{r}
 # Calculate the total time Tiggers spent playing each toy type
-sorted_toy <- arrange(unified_data, toy)
-sorted_toy
-
-total_kicker <- sorted_toy %>%
-  slice(c(2 : 3)) %>%
+total_kicker <- unified_data %>%
+  filter(toy == 'Banana catnip toy') %>%
   select(time) %>%
   sum()
 
-total_stationary <- sorted_toy %>%
-  slice(c(6, 13, 14)) %>%
+total_stationary <- unified_data %>%
+  filter(toy == 'Roller circuit toy' | toy == 'Cat dancer') %>%
   select(time) %>%
   sum()
 
-total_tunnel <- sorted_toy %>%
-  slice(c(7 : 8)) %>%
+total_tunnel <- unified_data %>%
+  filter(toy == 'Cat tunnel') %>%
   select(time) %>%
   sum()
 
-total_batting <- sorted_toy %>%
-  slice(c(1, 4 : 5, 9 : 12, 17)) %>%
+total_batting <- unified_data %>%
+  filter(toy == 'Paper frog' | toy == 'Bell mouse' | toy == 'An old shoelace' |
+         toy == 'Ping pong ball' | toy == 'Sprite bottle cap') %>%
   select(time) %>%
   sum()
 
-total_scratch <- sorted_toy %>%
-  slice(c(15, 16)) %>%
+total_scratch <- unified_data %>%
+  filter(toy == 'Scratch post') %>%
   select(time) %>%
   sum()
 
@@ -252,13 +250,13 @@ min_type <- min(total_type)
 max_type <- max(total_type)
 ```
 
-We found out that for each toy type, her respective play times are:
+Upon further examination of the data, I found out that for each toy type, her respective play times are:
 
-- kicker toys (banana catnip toy): `r total_kicker`
+- kicker toys: `r total_kicker`
 
-- stationary interactive toys (roller circuit toy, cat dancer): `r total_stationary`
+- stationary interactive toys: `r total_stationary`
 
-- mobile toys (an old shoelace, bell mouse, paper frog, ping pong ball, sprite bottle cap): `r total_batting`
+- mobile toys: `r total_batting`
 
 - cat tunnel: `r total_tunnel`
 
@@ -267,10 +265,11 @@ We found out that for each toy type, her respective play times are:
 
 and that the most/least amount of minutes she plays with a toy is `r max_type` and `r min_type` minutes respectively.
 
-While mobile toys are the most popular here, it's important to note that there are multiple toys included in that category, by individual they don't attract as many attention,  while the cat tunnel and kicker toy by themselves are fairly popular to Tiggers
+While mobile toys are fairly popular here, it's important to note that there are multiple toys included in that category, and by individual they don't attract as many attention. As for the stationary interactive toys, the roller circuit toy is very popular, however the cat dancer, only has average playtime. Kicker toys and cat tunnels while little in number seems fairly popular to Tiggers, but there's not enough toys to draw a conclusion that the whole type is sure to entice here. The only evident thing here is that she's not the biggest fan of the scratch post :D.
+
 
 ## Conclusion
 
-It would look like location has little to do with the toys Tiggers like to play with, as the time she plays in the living room and bedroom is heaving influenced by her attraction to the cat tunnel/roller circuit toy and banana catnip toy, respectively. There's no set type of toy she will preferably go for either. While you can look at the plot and say mobile toys are used the most the category included a whopping amount of 5 toys in total. The roller circuit toy is very popular, however the other toy in the category - the cat dancer, only has average playtime.
+It would look like location has little to do with the toys Tiggers like to play with, as the time she plays in the living room and bedroom is heaving influenced by her attraction to the cat tunnel/roller circuit toy and banana catnip toy, respectively. There's not enough data to conclude on a set type of toy she will preferably go for either.
 
-So in conclusion, Tiggers has some particular toys she really likes to play with regardless of location or type and it was silly of me to try and find a pattern. So whether toys I bought her in the future will please her is still up in the air, though I supposed I needn't buy any more mobile toys.
+So in conclusion, Tiggers has some particular toys she really likes to play with regardless of location or type and it was silly of me to try and find a pattern. So whether the toys I bought her in the future will please her is still up in the air, though I supposed one thing's for sure: I needn't buy any more mobile toys.
